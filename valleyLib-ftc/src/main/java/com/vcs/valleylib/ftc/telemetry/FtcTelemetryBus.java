@@ -1,6 +1,8 @@
 package com.vcs.valleylib.ftc.telemetry;
 
 import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.util.LinkedHashMap;
@@ -18,10 +20,10 @@ import java.util.Map;
 public class FtcTelemetryBus {
 
     private final Telemetry baseTelemetry;
-    private final PanelsTelemetry panelsTelemetry;
+    private final TelemetryManager panelsTelemetry;
     private final Map<String, Object> data = new LinkedHashMap<>();
 
-    public FtcTelemetryBus(Telemetry baseTelemetry, PanelsTelemetry panelsTelemetry) {
+    public FtcTelemetryBus(Telemetry baseTelemetry, TelemetryManager panelsTelemetry) {
         this.baseTelemetry = baseTelemetry;
         this.panelsTelemetry = panelsTelemetry;
     }

@@ -21,4 +21,6 @@ dependencies {
     compileOnly libs.robotserver
 
     api libs.fullpanels
+    api libs.ftc
+    api libs.telemetry
 }
