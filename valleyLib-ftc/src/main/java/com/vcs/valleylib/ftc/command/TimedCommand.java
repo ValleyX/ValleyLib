@@ -37,7 +37,23 @@ public abstract class TimedCommand implements Command {
         onEnd(interrupted);
     }
 
+    /**
+     * Called once when the command starts.
+     * Use this to reset actuators/state before loop updates begin.
+     */
     protected abstract void onStart();
+
+    /**
+     * Called every scheduler loop while the command is active.
+     *
+     * @param elapsedSeconds elapsed time since initialize()
+     */
     protected abstract void onLoop(double elapsedSeconds);
+
+    /**
+     * Called once when the command ends naturally or is interrupted.
+     *
+     * @param interrupted true if canceled before timeout
+     */
     protected abstract void onEnd(boolean interrupted);
 }
