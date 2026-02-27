@@ -1,4 +1,4 @@
-package com.vcs.valleylib.core.command.group;
+package com.vcs.valleylib.core.command.decorators;
 
 import com.vcs.valleylib.core.command.Command;
 import com.vcs.valleylib.core.subsystem.Subsystem;

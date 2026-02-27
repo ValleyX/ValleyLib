@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 /**
  * Base subsystem for robots using Pedro Pathing.
- *
+ * <p>
  * Owns the Follower and ensures update() is called
  * consistently through the command scheduler.
  */
