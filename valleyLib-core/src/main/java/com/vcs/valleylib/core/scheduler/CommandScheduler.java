@@ -23,6 +23,9 @@ public final class CommandScheduler {
     private final Set<Command> scheduledCommands = new HashSet<>();
     private final Map<Subsystem, Command> requirements = new HashMap<>();
     private final Set<Subsystem> subsystems = new HashSet<>();
+    private final Set<CommandSchedulerListener> listeners = new LinkedHashSet<>();
+
+    private boolean simulationEnabled;
 
     private CommandScheduler() {}
 
@@ -44,6 +47,41 @@ public final class CommandScheduler {
      */
     public void registerSubsystem(Subsystem subsystem) {
         subsystems.add(subsystem);
+    }
+
+    /**
+     * Adds a command lifecycle listener.
+     */
+    public void addListener(CommandSchedulerListener listener) {
+        listeners.add(listener);
+    }
+
+    /**
+     * Removes a previously registered command lifecycle listener.
+     */
+    public void removeListener(CommandSchedulerListener listener) {
+        listeners.remove(listener);
+    }
+
+    /**
+     * Enables/disables simulationPeriodic hooks during run().
+     */
+    public void setSimulationEnabled(boolean simulationEnabled) {
+        this.simulationEnabled = simulationEnabled;
+    }
+
+    public boolean isSimulationEnabled() {
+        return simulationEnabled;
+    }
+
+    /**
+     * Runs only subsystem simulation hooks.
+     * Useful for desktop tests where full scheduler execution is not desired.
+     */
+    public void runSimulationStep() {
+        for (Subsystem subsystem : subsystems) {
+            subsystem.simulationPeriodic();
+        }
     }
 
     /**
@@ -71,6 +109,9 @@ public final class CommandScheduler {
 
         command.initialize();
         scheduledCommands.add(command);
+        for (CommandSchedulerListener listener : listeners) {
+            listener.onCommandScheduled(command);
+        }
     }
 
     /**
@@ -78,6 +119,10 @@ public final class CommandScheduler {
      * Call this once per OpMode loop.
      */
     public void run() {
+        if (simulationEnabled) {
+            runSimulationStep();
+        }
+
         // Run subsystem background logic
         for (Subsystem subsystem : subsystems) {
             subsystem.periodic();
@@ -103,6 +148,9 @@ public final class CommandScheduler {
                 command.end(false);
                 release(command);
                 iterator.remove();
+                for (CommandSchedulerListener listener : listeners) {
+                    listener.onCommandFinished(command);
+                }
             }
         }
     }
@@ -116,6 +164,9 @@ public final class CommandScheduler {
         if (scheduledCommands.remove(command)) {
             command.end(true);
             release(command);
+            for (CommandSchedulerListener listener : listeners) {
+                listener.onCommandCanceled(command);
+            }
         }
     }
 
@@ -124,11 +175,40 @@ public final class CommandScheduler {
      * Typically used when an OpMode stops.
      */
     public void cancelAll() {
-        for (Command command : scheduledCommands) {
+        List<Command> toCancel = new ArrayList<>(scheduledCommands);
+        for (Command command : toCancel) {
             command.end(true);
+            for (CommandSchedulerListener listener : listeners) {
+                listener.onCommandCanceled(command);
+            }
         }
         scheduledCommands.clear();
         requirements.clear();
+    }
+
+    /**
+     * Returns whether a command instance is currently active in the scheduler.
+     *
+     * Useful for button-toggle style bindings and diagnostics.
+     *
+     * @param command command instance to check
+     * @return true when the command is in the scheduled set
+     */
+    public boolean isScheduled(Command command) {
+        return scheduledCommands.contains(command);
+    }
+
+    /**
+     * Clears scheduler runtime state, including registered subsystems.
+     *
+     * Intended for test isolation or explicit lifecycle resets between
+     * distinct robot modes. Any active command is interrupted.
+     */
+    public void reset() {
+        cancelAll();
+        subsystems.clear();
+        listeners.clear();
+        simulationEnabled = false;
     }
 
     /**

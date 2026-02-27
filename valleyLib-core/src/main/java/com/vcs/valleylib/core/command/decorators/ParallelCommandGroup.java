@@ -8,40 +8,48 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class RaceCommand extends BaseCommand {
+public class ParallelCommandGroup extends BaseCommand {
 
     private final Command[] commands;
+    private final Set<Command> running = new LinkedHashSet<>();
 
-    public RaceCommand(Command... commands) {
+    public ParallelCommandGroup(Command... commands) {
         this.commands = commands;
     }
 
     @Override
     protected void onInitialize() {
-        for (Command c : commands) {
-            c.initialize();
+        running.clear();
+        running.addAll(Arrays.asList(commands));
+        for (Command command : running) {
+            command.initialize();
         }
     }
 
     @Override
     protected void onExecute() {
-        for (Command c : commands) {
-            c.execute();
-        }
+        running.removeIf(command -> {
+            command.execute();
+            if (command.isFinished()) {
+                command.end(false);
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override
     protected boolean onIsFinished() {
-        for (Command c : commands) {
-            if (c.isFinished()) return true;
-        }
-        return false;
+        return running.isEmpty();
     }
 
     @Override
     protected void onEnd(boolean interrupted) {
-        for (Command c : commands) {
-            c.end(true);
+        if (interrupted) {
+            for (Command command : running) {
+                command.end(true);
+            }
+            running.clear();
         }
     }
 

@@ -11,7 +11,7 @@ import com.vcs.valleylib.core.command.Command;
 public abstract class RobotContainer {
 
     /**
-     * Configure driver controls and button bindings.
+     * Configure driver controls and trigger bindings.
      */
     public abstract void configureBindings();
 
@@ -19,4 +19,13 @@ public abstract class RobotContainer {
      * @return the autonomous command to run
      */
     public abstract Command getAutonomousCommand();
+
+    /**
+     * Optional teleop startup command.
+     *
+     * Return null when not needed.
+     */
+    public Command getTeleOpInitCommand() {
+        return null;
+    }
 }

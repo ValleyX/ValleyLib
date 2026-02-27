@@ -1,7 +1,20 @@
 package com.vcs.valleylib.core.command;
 
+import com.vcs.valleylib.core.command.decorators.BeforeStartingCommand;
+import com.vcs.valleylib.core.command.decorators.DeadlineCommand;
+import com.vcs.valleylib.core.command.decorators.FinallyCommand;
+import com.vcs.valleylib.core.command.decorators.OnlyWhileCommand;
+import com.vcs.valleylib.core.command.decorators.ParallelCommandGroup;
+import com.vcs.valleylib.core.command.decorators.RaceCommand;
+import com.vcs.valleylib.core.command.decorators.RepeatCommand;
+import com.vcs.valleylib.core.command.decorators.SequentialCommandGroup;
+import com.vcs.valleylib.core.command.decorators.TimeoutCommand;
+import com.vcs.valleylib.core.command.decorators.UnlessCommand;
+import com.vcs.valleylib.core.command.decorators.UntilCommand;
 import com.vcs.valleylib.core.subsystem.Subsystem;
+
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * Represents a unit of robot behavior.
@@ -56,5 +69,62 @@ public interface Command {
      */
     default Set<Subsystem> getRequirements() {
         return Set.of();
+    }
+
+    default Command withTimeout(double seconds) {
+        return new TimeoutCommand(this, (long) (seconds * 1000));
+    }
+
+    default Command until(BooleanSupplier condition) {
+        return new UntilCommand(this, condition);
+    }
+
+    default Command onlyWhile(BooleanSupplier condition) {
+        return new OnlyWhileCommand(this, condition);
+    }
+
+    default Command unless(BooleanSupplier condition) {
+        return new UnlessCommand(this, condition);
+    }
+
+    default Command beforeStarting(Runnable action) {
+        return new BeforeStartingCommand(this, action);
+    }
+
+    default Command finallyDo(Runnable action) {
+        return new FinallyCommand(this, action);
+    }
+
+    default Command repeatedly() {
+        return new RepeatCommand(this);
+    }
+
+    default Command alongWith(Command... others) {
+        Command[] all = new Command[others.length + 1];
+        all[0] = this;
+        System.arraycopy(others, 0, all, 1, others.length);
+        return new ParallelCommandGroup(all);
+    }
+
+    default Command raceWith(Command... others) {
+        Command[] all = new Command[others.length + 1];
+        all[0] = this;
+        System.arraycopy(others, 0, all, 1, others.length);
+        return new RaceCommand(all);
+    }
+
+    default Command deadlineWith(Command... others) {
+        return new DeadlineCommand(this, others);
+    }
+
+    default Command andThen(Runnable action) {
+        return andThen(new InstantCommand(action));
+    }
+
+    default Command andThen(Command... nextCommands) {
+        Command[] all = new Command[nextCommands.length + 1];
+        all[0] = this;
+        System.arraycopy(nextCommands, 0, all, 1, nextCommands.length);
+        return new SequentialCommandGroup(all);
     }
 }

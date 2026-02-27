@@ -2,6 +2,11 @@ package com.vcs.valleylib.core.command.decorators;
 
 import com.vcs.valleylib.core.command.BaseCommand;
 import com.vcs.valleylib.core.command.Command;
+import com.vcs.valleylib.core.subsystem.Subsystem;
+
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class DeadlineCommand extends BaseCommand {
 
@@ -34,5 +39,12 @@ public class DeadlineCommand extends BaseCommand {
     protected void onEnd(boolean interrupted) {
         deadline.end(interrupted);
         for (Command c : others) c.end(true);
+    }
+
+    @Override
+    public Set<Subsystem> getRequirements() {
+        Set<Subsystem> requirements = new LinkedHashSet<>(deadline.getRequirements());
+        Arrays.stream(others).forEach(command -> requirements.addAll(command.getRequirements()));
+        return requirements;
     }
 }

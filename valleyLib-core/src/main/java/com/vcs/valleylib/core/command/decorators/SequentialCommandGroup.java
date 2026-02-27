@@ -8,40 +8,50 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class RaceCommand extends BaseCommand {
+public class SequentialCommandGroup extends BaseCommand {
 
     private final Command[] commands;
+    private int currentIndex;
 
-    public RaceCommand(Command... commands) {
+    public SequentialCommandGroup(Command... commands) {
         this.commands = commands;
     }
 
     @Override
     protected void onInitialize() {
-        for (Command c : commands) {
-            c.initialize();
+        currentIndex = 0;
+        if (commands.length > 0) {
+            commands[0].initialize();
         }
     }
 
     @Override
     protected void onExecute() {
-        for (Command c : commands) {
-            c.execute();
+        if (currentIndex >= commands.length) {
+            return;
+        }
+
+        Command current = commands[currentIndex];
+        current.execute();
+
+        if (current.isFinished()) {
+            current.end(false);
+            currentIndex++;
+            if (currentIndex < commands.length) {
+                commands[currentIndex].initialize();
+            }
         }
     }
 
     @Override
     protected boolean onIsFinished() {
-        for (Command c : commands) {
-            if (c.isFinished()) return true;
-        }
-        return false;
+        return currentIndex >= commands.length;
     }
 
     @Override
     protected void onEnd(boolean interrupted) {
-        for (Command c : commands) {
-            c.end(true);
+        if (interrupted && currentIndex < commands.length) {
+            commands[currentIndex].end(true);
         }
     }
 
