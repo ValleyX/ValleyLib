@@ -24,6 +24,13 @@ public abstract class Subsystem {
     public void periodic() {}
 
     /**
+     * Called in simulation-enabled scheduler runs.
+     *
+     * Override this to run desktop-only sensor/motion simulation hooks.
+     */
+    public void simulationPeriodic() {}
+
+    /**
      * Sets the command that should run whenever no other command
      * is using this subsystem.
      *
